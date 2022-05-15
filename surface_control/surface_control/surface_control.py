@@ -12,7 +12,7 @@ class RobotStatusSubscriber(Node):
         self.node = rclpy.create_node("Surface_node")
         self.subscription = self.create_subscription(
             String,
-            '/robot_status',
+            '/nav2_bt_message',
             self.robot_status_callback,
             10)
         self.subscription  # prevent unused variable warning
@@ -25,21 +25,39 @@ class RobotStatusSubscriber(Node):
             self.is_changed = False
         else:
             self.is_changed = True
-            self.last_message = msg.data
+        self.last_message = msg.data
 
 
 def show_image_video(obj):
     cv2.namedWindow("Display", cv2.WND_PROP_FULLSCREEN)
     cv2.setWindowProperty("Display", cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-    img =  cv2.imread("/home/gamma-surface/serving_ws/src/surface_control/surface_control/golden.jpg")
+    
+    cap = cv2.VideoCapture("/home/gamma-surface/serving_ws/src/surface_control/surface_control/test.mp4")
+    is_video = True
     while True:
         if obj.is_changed:
-            if obj.last_message == "HI":
+            if obj.last_message == "Waiting for 7 seconds":
                 img = cv2.imread("/home/gamma-surface/serving_ws/src/surface_control/surface_control/golden_2.jpeg")
+                is_video = False
 
-        cv2.imshow("Display",img)
-        rclpy.spin_once(obj, timeout_sec=0.01)
-        cv2.waitKey(10)
+            elif obj.last_message == "Wait is over":
+                cap = cv2.VideoCapture("/home/gamma-surface/serving_ws/src/surface_control/surface_control/test.mp4")
+                is_video = True
+            obj.is_changed = False
+
+        if not is_video:
+            cv2.imshow("Display",img)
+            rclpy.spin_once(obj, timeout_sec=0.01)
+            cv2.waitKey(10)
+        else:
+            ret, frame = cap.read()
+            if ret == True:
+                cv2.imshow("Display", frame)
+                rclpy.spin_once(obj, timeout_sec=0.01)
+                cv2.waitKey(1)
+            else:
+                print("Video got over")
+                cap = cv2.VideoCapture("/home/gamma-surface/serving_ws/src/surface_control/surface_control/test.mp4")
     cv2.destroyAllWindows()
 
 
